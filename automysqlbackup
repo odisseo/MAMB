@@ -2245,11 +2245,24 @@ shift $(($OPTIND - 1))
 
 # For backward compatibility. If no option items are present and only one non-option item is there, we expect it
 # to be the optional config file and invoke the backup method.
-opt_flags=( "${!opt_flag_@}" )	# array of all set variables starting with opt_flag_
-if (( $# == 1 )) && (( ${#opt_flags[@]} == 0 )); then
-  opt_config_file="$1"; opt_flag_config_file=1; method_backup
+#opt_flags=( "${!opt_flag_@}" )	# array of all set variables starting with opt_flag_
+#if (( $# == 1 )) && (( ${#opt_flags[@]} == 0 )); then
+#  opt_config_file="$1"; opt_flag_config_file=1; method_backup
+#elif (( $# == 0 )) && (( ${#opt_flags[@]} == 0 )); then
+#  method_backup
+#fi
+
+opt_flags=( "${!opt_flag_@}" )  # array of all set variables starting with opt_flag_
+opt_config_file_number=$#
+if (( $# >= 1 )) && (( ${#opt_flags[@]} == 0 )); then
+  for (( i=1 ; i <= $opt_config_file_number; i++ ))
+  do
+     opt_config_file="$1"; opt_flag_config_file=$i; method_backup
+     shift
+  done
 elif (( $# == 0 )) && (( ${#opt_flags[@]} == 0 )); then
   method_backup
 fi
+
 
 # END __main
