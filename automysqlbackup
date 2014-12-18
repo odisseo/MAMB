@@ -165,8 +165,11 @@ mail_cleanup () {
 				rm "$temp"
 			    ;;
 	    'log')
-			    cat "$log_file" | mail -s "MySQL Backup Log for ${CONFIG_mysql_dump_host_friendly:-$CONFIG_mysql_dump_host} - ${datetimestamp}" ${CONFIG_mail_address}
-			    [[ -s "$log_errfile" ]] && cat "$log_errfile" | mail -s "ERRORS REPORTED: MySQL Backup error Log for ${CONFIG_mysql_dump_host_friendly:-$CONFIG_mysql_dump_host} - ${datetimestamp}" ${CONFIG_mail_address}
+          if [[ -s "$log_errfile" ]]; then
+            cat "$log_file" && printf "\n###### WARNING ######\nErrors reported during AutoMySQLBackup execution.. Backup failed\nError log below..\n" && cat "$log_errfile" | mail -s "ERRORS REPORTED: MySQL Backup error Log for ${CONFIG_mysql_dump_host_friendly:-$CONFIG_mysql_dump_host} - ${datetimestamp}" ${CONFIG_mail_address}
+          else
+			      cat "$log_file" | mail -s "MySQL Backup Log for ${CONFIG_mysql_dump_host_friendly:-$CONFIG_mysql_dump_host} - ${datetimestamp}" ${CONFIG_mail_address}
+			    fi
 			    ;;
 	    'quiet')
 			    [[ -s "$log_errfile" ]] && cat "$log_errfile" | mail -s "ERRORS REPORTED: MySQL Backup error Log for ${CONFIG_mysql_dump_host_friendly:-$CONFIG_mysql_dump_host} - ${datetimestamp}" ${CONFIG_mail_address}
@@ -304,7 +307,7 @@ files_postprocessing () {
 		if (( $CONFIG_dryrun )); then
 		  printf 'dry-running: cp -al %s.enc %s/latest/\n' "${1}" "${CONFIG_backup_dir}"
 		else
-		  cp -al "${1}${suffix}.enc" "${CONFIG_backup_dir}"/latest/
+		  cp -al "${1}.enc" "${CONFIG_backup_dir}"/latest/
 		fi
 	  else
 		if (( $CONFIG_dryrun )); then
@@ -1519,7 +1522,7 @@ extended_select() {
 								  else
 									if (( $op_rm )); then
 									  new_array=()
-									  for ((m="$((${#selection[@]}-1))";m>=0;m--)); do
+									  for ((m="$((${#selection[@]}-1))";m>=0;m--)); do  #per migliorare color indent on sublime text"
 										if [[ "x${selection[m]}" != "x$k" ]]; then
 										  new_array=("${new_array[@]}" "${selection[m]}")
 										fi
@@ -1642,7 +1645,7 @@ method_backup () {
 
 	load_default_config
 
-	trap mail_cleanup EXIT SIGHUP SIGINT SIGQUIT SIGTERM
+	# trap mail_cleanup EXIT SIGHUP SIGINT SIGQUIT SIGTERM
 	if [[ -r "${CONFIG_configfile}" ]]; then source "${CONFIG_configfile}"; echo "Parsed config file \"${CONFIG_configfile}\""; else let "N |= $N_config_file_missing"; fi; echo
 	if (( $opt_flag_config_file )); then if [[ -r "${opt_config_file}" ]]; then source "${opt_config_file}"; let "N |= $N_arg_conffile_parsed"; else let "N |= $N_arg_conffile_unreadable"; fi; else let "N |= $N_too_many_args"; fi
 
@@ -1987,7 +1990,7 @@ method_backup () {
 
 	if [[ -s "$log_errfile" ]];then status=1; else status=0; fi
 
-	exit ${status}
+  mail_cleanup
 
 }
 
@@ -2245,24 +2248,17 @@ shift $(($OPTIND - 1))
 
 # For backward compatibility. If no option items are present and only one non-option item is there, we expect it
 # to be the optional config file and invoke the backup method.
-#opt_flags=( "${!opt_flag_@}" )	# array of all set variables starting with opt_flag_
-#if (( $# == 1 )) && (( ${#opt_flags[@]} == 0 )); then
-#  opt_config_file="$1"; opt_flag_config_file=1; method_backup
-#elif (( $# == 0 )) && (( ${#opt_flags[@]} == 0 )); then
-#  method_backup
-#fi
-
-opt_flags=( "${!opt_flag_@}" )  # array of all set variables starting with opt_flag_
+opt_flags=( "${!opt_flag_@}" )	# array of all set variables starting with opt_flag_
 opt_config_file_number=$#
 if (( $# >= 1 )) && (( ${#opt_flags[@]} == 0 )); then
-  for (( i=1 ; i <= $opt_config_file_number; i++ ))
+  for (( o=1 ; o <= $opt_config_file_number; o++ ))
   do
-     opt_config_file="$1"; opt_flag_config_file=$i; method_backup
+     opt_config_file="$1"; opt_flag_config_file=1; method_backup
      shift
   done
+  exit ${status}
 elif (( $# == 0 )) && (( ${#opt_flags[@]} == 0 )); then
-  method_backup
+  method_backup; exit ${status}
 fi
-
 
 # END __main
