@@ -53,7 +53,7 @@ Automysqlbackup can be run a number of ways, you can choose which is best for yo
 #~~~~ Copy From Below Here ~~~~
 #!/bin/sh
 
-/usr/local/bin/automysqlbackup /etc/automysqlbackup/myserver.conf
+/usr/local/bin/automysqlbackup /etc/automysqlbackup/myserver1.conf /etc/automysqlbackup/myserver2.conf
 
 chown root.root /var/backup/db* -R
 find /var/backup/db* -type f -exec chmod 400 {} \;
@@ -68,7 +68,7 @@ find /var/backup/db* -type d -exec chmod 700 {} \;
 
 The backup can be run from the command line simply by running the following command.
 
-  automysqlbackup /etc/automysqlbackup/myserver.conf
+  automysqlbackup /etc/automysqlbackup/myserver1.conf /etc/automysqlbackup/myserver2.conf
 
 If you don't supply an argument for automysqlbackup, the default configuration
 in the program automysqlbackup will be used unless a global file
@@ -79,6 +79,12 @@ exists.
 
 You can just copy the supplied automysqlbackup.conf as many times as you want
 and use for separate configurations, i.e. for example different mysql servers.
+
+!!! FORK !!!
+----------
+
+You can add multiple config files as argument.
+If you choose "log" for the mail function, the script doesn't send you any more 2 mail (log and error), but only one (log+error)
 
 !!! NEW !!!
 ----------

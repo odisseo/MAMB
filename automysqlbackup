@@ -166,9 +166,9 @@ mail_cleanup () {
 			    ;;
 	    'log')
           if [[ -s "$log_errfile" ]]; then
-            cat "$log_file" && printf "\n###### WARNING ######\nErrors reported during AutoMySQLBackup execution.. Backup failed\nError log below..\n" && cat "$log_errfile" | mail -s "ERRORS REPORTED: MySQL Backup error Log for ${CONFIG_mysql_dump_host_friendly:-$CONFIG_mysql_dump_host} - ${datetimestamp}" ${CONFIG_mail_address}
+            { cat "$log_file"; printf "\n################## WARNING ##################\nErrors reported during AutoMySQLBackup execution.. Backup failed\nError log below..\n"; cat "$log_errfile"; } | mail -s "ERRORS: MySQL Backup error Log for ${CONFIG_mysql_dump_host_friendly:-$CONFIG_mysql_dump_host} - ${datetimestamp}" ${CONFIG_mail_address}
           else
-			      cat "$log_file" | mail -s "MySQL Backup Log for ${CONFIG_mysql_dump_host_friendly:-$CONFIG_mysql_dump_host} - ${datetimestamp}" ${CONFIG_mail_address}
+			      cat "$log_file" | mail -s "OK: MySQL Backup Log for ${CONFIG_mysql_dump_host_friendly:-$CONFIG_mysql_dump_host} - ${datetimestamp}" ${CONFIG_mail_address}
 			    fi
 			    ;;
 	    'quiet')
@@ -1973,6 +1973,8 @@ method_backup () {
 	echo "Total disk space used for backup storage..."
 	echo "Size - Location"
 	echo `du -hsH "${CONFIG_backup_dir}"`
+  echo "Size - Partition"
+  echo `df -h "${CONFIG_backup_dir}"`
 	echo
 	echo "======================================================================"
 	# <- finished information
